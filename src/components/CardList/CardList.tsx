@@ -1,41 +1,76 @@
 'use client'
 
 import Card from '@/components/Card'
+import TextInput from '@/components/TextInput'
 import axios from 'axios'
-import PokemonCard from '@/interfaces'
 import { useState, useEffect } from 'react'
 
-interface Pokemons {
-    name: string,
-    url: string
-}
+const fetchPokemonData = async (length: number) => {
+  const promiseArr = [];
+  for (let i = length; i < length + 20; i++) {
+    promiseArr.push(
+      (await axios.get(`https://pokeapi.co/api/v2/pokemon/${i}`))
+    );
+  }
+  const resolvedData = await Promise.all(promiseArr);
+  return resolvedData.map((item) => {
+    return {
+      name: item.data.name,
+      sprite: item.data.sprites.front_default
+    };
+  });
+};
 
 export default function CardList() {
-    const [pokemons, setPokemons] = useState<any[]>([])
+  const [data, setData] = useState<any[]>([]);
+  const [listSize, setListSize] = useState<number>(0)
+  const [message, setMessage] = useState("");
+  const [isLoading, setLoading] = useState(true);
+  const [filteredPokemon, setFilteredPokemon] = useState(data)
 
-    const [url, setUrl] = useState("https://pokeapi.co/api/v2/pokemon?limit=30")
+  const fetchPokemonListSize = async () => {
+    const results = await axios.get('https://pokeapi.co/api/v2/pokemon/')
+    setListSize(results.data.count)
+  }
 
-    const getPokemons = () => {
-        const requests = []
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true);
+      setMessage("Carregando...");
+      const resp = await fetchPokemonData(1);
+      setData(resp);
+      setLoading(false);
+    };
+    fetchData();
+    fetchPokemonListSize()
+  }, [])
 
-        for(let i = 1; i < 30; i++ ) {
-            requests.push(`https://pokeapi.co/api/v2/pokemon/${i}/`)
-        }
-
-        const results =  axios.all(requests.map((request) => axios.get(request))).then((res) => setPokemons(res))
+  window.onscroll = () => {
+    if(data.length === listSize) {
+      setMessage("Fim da lista")
+      return
     }
+    if (window.innerHeight + document.documentElement.scrollTop === document.documentElement.offsetHeight) {
+      setMessage("Loading...")
+      setLoading(true)
+      fetchPokemonData(data.length).then((newPokemons) => {
+        setData([...data, ...newPokemons]);
+        setLoading(false);
+      });
+    }
+  }
 
-    useEffect(() => {
-        getPokemons()
-    }, [])
-
-    return (
-        <div className="flex justify-center items-center space-x-2 space-y-2">
-            {
-                pokemons.map((pokemon, key) => (
-                    <Card key={key} name={pokemon.data.name} img={pokemon.data.sprites.front_default} types={pokemon.data.types[0].type.name}/>
-                ))
-            }
+  return (
+    <div>
+      <div className='flex items-center justify-center mt-7'>
+        <TextInput />
+      </div>
+      <div className="mt-10 grid grid-cols-4 gap-10">
+        {data.map((pokemon, key) => (
+          <Card key={key} name={pokemon.name} img={pokemon.sprite} />))
+        }
         </div>
-    )
+        {isLoading && <h1 className='w-full pt-10 flex text-black justify-center items-center'>{message}</h1>}
+    </div>
+  )
 }

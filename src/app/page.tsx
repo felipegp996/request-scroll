@@ -5,11 +5,13 @@ import CardList from '@/components/CardList';
 export default function Home() {
   return (
     <>
-    <header>
+    <header className='pt-10'>
       <Header />
     </header>
-    <section>
-      <TextInput />
+    <section className='p-10 pt-0'>
+      {/* <div className='flex items-center justify-center mt-7'>
+        <TextInput />
+      </div> */}
       <div>
         <CardList />
       </div>
