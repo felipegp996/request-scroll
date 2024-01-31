@@ -8,13 +8,6 @@ interface Pokemon {
 
 export default function Card(props: Pokemon) {
 
-    const typeHandler = (types: Types[]) => {
-        if(types[1]) {
-            return types[0].type.name + " " + types[1].type.name
-        }
-        return types[0]
-    }
-
     return (
         <div className="p-5 rounded-lg bg-white shadow-lg">
             <div className="max-w-sm rounded">
